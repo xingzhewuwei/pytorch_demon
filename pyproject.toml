@@ -1,11 +1,12 @@
 [project]
 name = "torch-demon"
 version = "0.1.0"
-description = "Add your description here"
+description = "从零学 PyTorch：张量 → autograd → 线性回归实战（小白向）"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "matplotlib>=3.11.1",
+    "numpy>=2.0",
     "torch>=2.13.0",
     "torchvision>=0.28.0",
 ]
