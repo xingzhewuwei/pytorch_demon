@@ -28,6 +28,24 @@ uv sync
 uv run python -c "import torch; print(torch.__version__, torch.backends.mps.is_available())"
 ```
 
+#### 中国大陆：配置 PyPI 镜像源（必看，否则装包超时）
+
+PyPI 官方源（`files.pythonhosted.org`）在国内经常连不上，`uv add` 装 `gradio`/`torch` 这类大依赖时会反复超时。把默认源换成清华镜像，一劳永逸：
+
+```bash
+# 方式 A（推荐，写进 uv 全局配置，对所有项目生效）
+mkdir -p ~/.config/uv
+cat > ~/.config/uv/uv.toml <<'EOF'
+index-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+EOF
+
+# 方式 B（临时一次，复制即可）
+UV_DEFAULT_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple uv add gradio
+```
+
+> 注意：uv 的配置文件**顶层**直接写 `index-url = ...` 才会替换默认源；
+> 写成 `[install]` 表或只设 `UV_DEFAULT_INDEX_URL` 环境变量都**不生效**（前者会让 uv 启动直接报错，后者只当额外源、PyPI 仍是首选）。本仓库已验证清华/阿里镜像均可用。
+
 ### GPU 后端说明（很重要，少踩坑）
 
 | 硬件 | 后端 | 备注 |
@@ -72,6 +90,8 @@ torch_demon/
 ├── download_mnist.py     # 备用：torchvision 下载源失效时，手动从镜像拉 MNIST 数据
 ├── handwriting_app.py     # 应用：鼠标手写数字 → 模型实时识别（gradio 画板 + MNIST MLP）
 ├── mnist_mlp.pth          # 应用运行时训练并缓存的模型权重（已被 .gitignore 忽略）
+├── build_learning_pdf.py  # 生成配套 PDF 学习手册（reportlab + 中文字体）
+├── PyTorch从零实战学习手册.pdf  # 配套中文学习手册（离线可读/打印）
 └── .venv/                 # 虚拟环境（已被 .gitignore 忽略）
 ```
 
@@ -120,6 +140,9 @@ uv add gradio
 uv run handwriting_app.py
 ```
 
+应用已实机验证可跑通：在画板写数字，右侧实时输出概率条形 + 0~9 概率明细表。
+关键铁律：**推理预处理必须与训练完全一致**（灰度 → 取笔画 → 缩放居中 28×28 → `Normalize(0.1307,0.3081)`），否则识别失真。
+
 `uv run main.py` 会输出训练过程、学出的规律（≈ `0.49*面积 + 2.07*房间 - 1.53*地铁 + 10.9`，贴合真实 `0.5/2.0/-1.5/10`），并保存 `house_price_v2.png`：
 
 ![house_price_v2](house_price_v2.png)
@@ -152,6 +175,20 @@ uv run python data/generate_house_price_data.py
 3. **梯度会累加，每个 batch 更新前必须 `zero_grad()`。**
 4. **早停 / 学习率衰减是加速器，不是必需品**——先用最简单的跑通，再叠加。
 5. **MNIST 下载源不稳定（torchvision 新版）。** `MNIST(download=True)` 默认源时好时坏，表现为"进度到 100% 后报 RuntimeError / File not found or corrupted"，甚至下到一半被掐断留下**截断的损坏文件**（如 `train-images` 只有几百 KB）。注意：torchvision 只认解压后的 `.ubyte` 文件、且对 `.gz` 做 MD5 校验——不同镜像重新压缩后 MD5 会变，导致它反复去坏源重下死循环。正确做法：`uv run download_mnist.py` 从可用镜像拉官方 `.gz` → 校验 gzip 完整性 → 解压出 `.ubyte` → 校验内容（magic 字节 + 尺寸）→ 落盘到 `data_mnist/MNIST/raw/`；之后 `06_mnist.py` 检测到本地 `.ubyte` 直接训练，根本不查 MD5。
+6. **手写识别应用：gradio Sketchpad 返回的是 `dict` 不是 PIL。** `Sketchpad.change` 回调拿到 `{"image": 背景, "mask": 用户笔画}`（含 alpha），直接 `.convert()` 会报 `'dict' object has no attribute 'convert'`；要先解包取真实图层。
+7. **手写识别应用：恒为同一个数字（如恒输出 5）。** 这是"输入图像每次都一样"的典型症状——若按"白像素最多的图层"选笔画层，会选中纯白背景层，导致模型每次吃空白图。正确做法：把所有图层的"墨迹"（与各自背景差异大的像素）取并集，再统一渲染成黑底白字。
+
+---
+
+## 配套学习手册（PDF）
+
+仓库根目录的 **`PyTorch从零实战学习手册.pdf`** 是把以上所有阶段、踩坑、应用整理成的一份完整中文教程（从张量到手写数字识别），适合离线阅读 / 打印。由 `build_learning_pdf.py`（reportlab + STSong-Light 中文字体）生成：
+
+```bash
+uv run --extra "" python build_learning_pdf.py   # 或直接在装好 reportlab 的环境运行
+```
+
+> 手册内容与 `lessons/` 各课一一对应，但更连贯、更适合"从头看一遍"。想改排版或补充章节，直接编辑 `build_learning_pdf.py` 重新生成即可。
 
 ---
 

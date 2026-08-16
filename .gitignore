@@ -11,6 +11,10 @@ wheels/
 
 # Model checkpoints (训练时生成的运行时产物，非数据)
 /house_price_model.pth
+/mnist_mlp.pth
+
+# 历史遗留的临时 venv（非本仓库正式环境）
+/.venv_mnist
 
 # macOS
 .DS_Store
