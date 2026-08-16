@@ -15,3 +15,6 @@ wheels/
 # macOS
 .DS_Store
 
+# MNIST 数据集（torchvision 自动下载的大文件，非代码）
+/data_mnist/
+

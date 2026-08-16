@@ -67,6 +67,7 @@ class ToyClassifier(nn.Module):
         return self.net(x)
 
 model = ToyClassifier()
+print(model)
 # =====================================================================
 # 3. 损失 + 优化器
 #    CrossEntropyLoss 内部已含 softmax，所以模型输出【不要】先 softmax
@@ -119,3 +120,4 @@ ax.set_title(f"Classification Decision Boundary (acc {acc * 100:.1f}%)")
 ax.set_xlabel("feature 1"); ax.set_ylabel("feature 2"); ax.legend()
 fig.savefig(os.path.join(HERE, "classification_result.png"), dpi=120)
 print("📊 已保存 classification_result.png")
+

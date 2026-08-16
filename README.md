@@ -66,7 +66,12 @@ torch_demon/
 │   ├── 05_classification.py   # 阶段5：分类任务（单层 2→16→3，99 参数，基线）
 │   ├── 05_classification.md    # 阶段5 讲解
 │   ├── 05b_deeper.py           # 阶段5 加深对照：3 隐藏层 2→64→32→16→3（2851 参数）
-│   └── 05b_deeper.md           # 阶段5 加深讲解（如何加层 + 核对参数量）
+│   ├── 05b_deeper.md           # 阶段5 加深讲解（如何加层 + 核对参数量）
+│   ├── 06_mnist.py             # 阶段6：MNIST 手写数字分类（真实数据集，MLP）
+│   ├── 06_mnist.md             # 阶段6 讲解
+├── download_mnist.py     # 备用：torchvision 下载源失效时，手动从镜像拉 MNIST 数据
+├── handwriting_app.py     # 应用：鼠标手写数字 → 模型实时识别（gradio 画板 + MNIST MLP）
+├── mnist_mlp.pth          # 应用运行时训练并缓存的模型权重（已被 .gitignore 忽略）
 └── .venv/                 # 虚拟环境（已被 .gitignore 忽略）
 ```
 
@@ -82,6 +87,8 @@ torch_demon/
 | 4 | 工业级模板 | `lessons/04_template.py` | 能用 `nn.Module`+`DataLoader` 重写阶段3，训练循环五步顺序口述无误，测试集 R²≈0.99 |
 | 5 | 分类任务 Classification | `lessons/05_classification.py` | 能说清 `CrossEntropyLoss` 与 `MSELoss` 区别、输出维度=类别数、用 `argmax`+准确率评估 |
 | 5b | 分类·加深对照 | `lessons/05b_deeper.py` | 能动手加隐藏层、保证维度链 `in/out` 接力、手算参数量（2→64→32→16→3 = 2851） |
+| 6 | 真实数据集 MNIST | `lessons/06_mnist.py` | 能说清图片为何要先 Flatten 才能进 Linear、模型与数据需同 device、测试集准确率约 95%~98% |
+| 应用 | 手写数字识别器 | `handwriting_app.py` | 能在画板上写数字并被实时识别，能说清"推理预处理必须与训练完全一致"这条铁律 |
 
 ---
 
@@ -104,6 +111,13 @@ uv run lessons/05_classification.py
 
 # 阶段5 加深对照：3 隐藏层深网络（对比单层基线）
 uv run lessons/05b_deeper.py
+
+# 阶段6：MNIST 手写数字分类（如遇到下载 404，先 uv run download_mnist.py 再跑）
+uv run lessons/06_mnist.py
+
+# 应用：鼠标手写数字识别器（首次会训练并缓存权重，终端会打印 http://127.0.0.1:7860）
+uv add gradio
+uv run handwriting_app.py
 ```
 
 `uv run main.py` 会输出训练过程、学出的规律（≈ `0.49*面积 + 2.07*房间 - 1.53*地铁 + 10.9`，贴合真实 `0.5/2.0/-1.5/10`），并保存 `house_price_v2.png`：
@@ -137,6 +151,7 @@ uv run python data/generate_house_price_data.py
    只标准化 X、y 均值高达 ~62 时，Adam 的有效步长 ≈ `lr`，截距要从 0 爬到 62，需 6000+ 步；2000 步根本没收敛（loss 停在 3100）。把 y 也标准化，几十步就收敛。
 3. **梯度会累加，每个 batch 更新前必须 `zero_grad()`。**
 4. **早停 / 学习率衰减是加速器，不是必需品**——先用最简单的跑通，再叠加。
+5. **MNIST 下载源不稳定（torchvision 新版）。** `MNIST(download=True)` 默认源时好时坏，表现为"进度到 100% 后报 RuntimeError / File not found or corrupted"，甚至下到一半被掐断留下**截断的损坏文件**（如 `train-images` 只有几百 KB）。注意：torchvision 只认解压后的 `.ubyte` 文件、且对 `.gz` 做 MD5 校验——不同镜像重新压缩后 MD5 会变，导致它反复去坏源重下死循环。正确做法：`uv run download_mnist.py` 从可用镜像拉官方 `.gz` → 校验 gzip 完整性 → 解压出 `.ubyte` → 校验内容（magic 字节 + 尺寸）→ 落盘到 `data_mnist/MNIST/raw/`；之后 `06_mnist.py` 检测到本地 `.ubyte` 直接训练，根本不查 MD5。
 
 ---
 

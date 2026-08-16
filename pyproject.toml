@@ -5,6 +5,7 @@ description = "从零学 PyTorch：张量 → autograd → 线性回归实战 �
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "gradio>=6.24.0",
     "matplotlib>=3.11.1",
     "numpy>=2.0",
     "torch>=2.13.0",
