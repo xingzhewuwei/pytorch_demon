@@ -1,4 +1,16 @@
 {
     "python-envs.defaultEnvManager": "ms-python.python:venv",
-    "python-envs.defaultPackageManager": "ms-python.python:pip"
+    "python-envs.defaultPackageManager": "ms-python.python:pip",
+
+    // 1. 强制使用 Pylance 作为语言服务器（支持解析 .pyi 类型存根文件）
+    "python.languageServer": "Pylance",
+    
+    // 2. 禁用旧版的 Jedi 解析器（Jedi 对 PyTorch 的提示非常弱）
+    "python.jediEnabled": false,
+    
+    // 3. 开启基本类型检查，帮助 Pylance 更好地推断类型
+    "python.analysis.typeCheckingMode": "basic",
+    
+    // 4. 补全函数时自动加上括号
+    "python.analysis.completeFunctionParens": true
 }
