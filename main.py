@@ -1,6 +1,5 @@
-def main():
-    print("Hello from torch-demon!")
+
+import torch
+import matplotlib.pyplot as plt
 
 
-if __name__ == "__main__":
-    main()
