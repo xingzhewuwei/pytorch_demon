@@ -49,6 +49,10 @@ torch_demon/
 ├── uv.lock                # 锁定依赖版本，保证可复现
 ├── main.py                # 综合实战：多变量房价预测（= lessons/03_regression.py）
 ├── house_price_v2.png     # main.py 输出的可视化结果
+├── data/                  # 学习用的数据集（已落盘，可复现）
+│   ├── generate_house_price_data.py  # 生成数据集（固定 seed=42）
+│   ├── house_price.pt                # PyTorch 原生格式（X_raw / y_data）
+│   └── house_price.csv               # 人可读格式，便于检视
 ├── lessons/
 │   ├── 01_tensor.py       # 阶段1：张量基础
 │   ├── 01_tensor.md       # 阶段1 讲解
@@ -56,7 +60,13 @@ torch_demon/
 │   ├── 02_autograd.md     # 阶段2 讲解
 │   ├── 02_intuition.py    # 阶段2 补充：用"推一下"理解导数（给初学者）
 │   ├── 03_regression.py   # 阶段3：房价回归（与根目录 main.py 一致）
-│   └── 03_regression.md   # 阶段3 讲解
+│   ├── 03_regression.md   # 阶段3 讲解
+│   ├── 04_template.py     # 阶段4：工业级模板（nn.Module + DataLoader + state_dict）
+│   ├── 04_template.md     # 阶段4 讲解
+│   ├── 05_classification.py   # 阶段5：分类任务（单层 2→16→3，99 参数，基线）
+│   ├── 05_classification.md    # 阶段5 讲解
+│   ├── 05b_deeper.py           # 阶段5 加深对照：3 隐藏层 2→64→32→16→3（2851 参数）
+│   └── 05b_deeper.md           # 阶段5 加深讲解（如何加层 + 核对参数量）
 └── .venv/                 # 虚拟环境（已被 .gitignore 忽略）
 ```
 
@@ -69,7 +79,9 @@ torch_demon/
 | 1 | 张量 Tensor | `lessons/01_tensor.py` | 能不查文档写出 reshape/广播并说清形状 |
 | 2 | 自动求导 autograd | `lessons/02_autograd.py`（直觉见 `02_intuition.py`） | 能口述 `backward()→.grad→zero_grad` 流程 |
 | 3 | 线性回归实战 | `lessons/03_regression.py`（= `main.py`） | 学出的系数接近真实规律，能解释"标签为何也要标准化" |
-| 4（进阶） | `nn.Module` / `DataLoader` / 标准训练循环 | 代码中已含注释，建议照此改写阶段3 | 能把裸实现改写成官方模板 |
+| 4 | 工业级模板 | `lessons/04_template.py` | 能用 `nn.Module`+`DataLoader` 重写阶段3，训练循环五步顺序口述无误，测试集 R²≈0.99 |
+| 5 | 分类任务 Classification | `lessons/05_classification.py` | 能说清 `CrossEntropyLoss` 与 `MSELoss` 区别、输出维度=类别数、用 `argmax`+准确率评估 |
+| 5b | 分类·加深对照 | `lessons/05b_deeper.py` | 能动手加隐藏层、保证维度链 `in/out` 接力、手算参数量（2→64→32→16→3 = 2851） |
 
 ---
 
@@ -83,11 +95,37 @@ uv run lessons/02_intuition.py
 
 # 综合实战：多变量房价预测（收敛版）
 uv run main.py
+
+# 阶段4：工业级标准模板（nn.Module + DataLoader + 保存加载 + 测试集评估）
+uv run lessons/04_template.py
+
+# 阶段5：分类任务（玩具数据，零下载依赖，输出决策边界图 classification_result.png）
+uv run lessons/05_classification.py
+
+# 阶段5 加深对照：3 隐藏层深网络（对比单层基线）
+uv run lessons/05b_deeper.py
 ```
 
 `uv run main.py` 会输出训练过程、学出的规律（≈ `0.49*面积 + 2.07*房间 - 1.53*地铁 + 10.9`，贴合真实 `0.5/2.0/-1.5/10`），并保存 `house_price_v2.png`：
 
 ![house_price_v2](house_price_v2.png)
+
+`uv run lessons/04_template.py` 则把同一道题重写成工业级模板：用 `nn.Module` 定义网络、`DataLoader` 小批量训练、划分 train/test 并报告 **R²≈0.99**、演示 `state_dict` 保存与加载。这是后续写任何网络（CNN/RNN/Transformer）都通用的骨架。
+
+---
+
+## 数据文件
+
+房价预测用的数据集已落盘在 `data/`，不依赖运行时随机生成：
+
+- `data/house_price.pt` — PyTorch 原生格式（`torch.load` 后是一个 dict，含 `X_raw`、`y_data`、特征名），阶段 4 训练时优先从这里加载。
+- `data/house_price.csv` — 人可读的 100 行数据（面积 / 房间数 / 地铁距离 / 房价），可在 Excel 或编辑器里直接看。
+- `data/generate_house_price_data.py` — 数据生成脚本，固定 `seed=42`，保证可复现。
+
+```bash
+# 重新生成数据集（可选）
+uv run python data/generate_house_price_data.py
+```
 
 ---
 

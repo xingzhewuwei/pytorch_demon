@@ -49,3 +49,4 @@ uv run main.py                 # 或 uv run lessons/03_regression.py（内容一
 ## 一句话总结
 
 监督学习闭环 = 造数据 → 输入/标签双标准化 → 建参数 → 前向 → 算 loss → 反向 → 优化器更新 → 早停 → 反归一化验证。
+

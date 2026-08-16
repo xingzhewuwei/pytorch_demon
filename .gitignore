@@ -8,3 +8,10 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Model checkpoints (训练时生成的运行时产物，非数据)
+/house_price_model.pth
+
+# macOS
+.DS_Store
+

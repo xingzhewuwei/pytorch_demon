@@ -1,7 +1,7 @@
 [project]
 name = "torch-demon"
 version = "0.1.0"
-description = "从零学 PyTorch：张量 → autograd → 线性回归实战（小白向）"
+description = "从零学 PyTorch：张量 → autograd → 线性回归实战 → 工业级 nn.Module 模板（小白向）"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
